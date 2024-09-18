@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace RMarche
 {
@@ -115,6 +116,88 @@ namespace RMarche
             };
             //Transformer
 
+            List<Tuple<string, string, double>> transformedProducts = products
+          .Select(p => new Tuple<string, string, double>(
+              p.Producer.Substring(0, 3) + "..." + p.Producer.Last(),
+              productsDic[p.ProductName],
+              p.Quantity * p.PricePerUnit
+          ))
+          .ToList();
+
+
+            Console.WriteLine("Seller\tProduct\tCA");
+            for (int i = 0; i < transformedProducts.Count; i++)
+            {
+                Tuple<string, string, double> item = transformedProducts[i];
+                Console.WriteLine(item.Item1 + "\t" + item.Item2 + "\t" + item.Item3);
+            }
+
+            // Livrable 2: Exportar a un archivo CSV sin foreach
+            using (StreamWriter writer = new StreamWriter("products.csv"))
+            {
+                writer.WriteLine("Seller,Product,CA");
+                for (int i = 0; i < transformedProducts.Count; i++)
+                {
+                    Tuple<string, string, double> item = transformedProducts[i];
+                    writer.WriteLine(item.Item1 + "," + item.Item2 + "," + item.Item3);
+                }
+            }
+// Continuando desde el código anterior...
+
+            // Cantidad de groseilles disponibles
+int groseillesQuantity = products
+    .Where(p => p.ProductName == "Groseilles")
+    .Sum(p => p.Quantity);
+            Console.WriteLine("Cantidad de groseilles: " + groseillesQuantity + " kg");
+
+            // Chiffre d’affaire total por productor
+            List<Tuple<string, double>> totalCAByProducer = products
+                .GroupBy(p => p.Producer)
+                .Select(g => new Tuple<string, double>(
+                    g.Key,
+                    g.Sum(p => p.Quantity * p.PricePerUnit)
+                ))
+                .ToList();
+
+            // Chiffre d’affaire más grande, más pequeño y la media
+            double maxCA = totalCAByProducer.Max(p => p.Item2);
+            double minCA = totalCAByProducer.Min(p => p.Item2);
+            double avgCA = totalCAByProducer.Average(p => p.Item2);
+
+            Console.WriteLine("CA más grande: " + maxCA);
+            Console.WriteLine("CA más pequeño: " + minCA);
+            Console.WriteLine("CA promedio: " + avgCA);
+
+            // Productor con más noix
+            Product maxNoixProducer = products
+                .Where(p => p.ProductName == "Noix")
+                .OrderByDescending(p => p.Quantity)
+                .FirstOrDefault();
+            Console.WriteLine("El productor con más noix: " + (maxNoixProducer != null ? maxNoixProducer.Producer : "Ninguno"));
+
+            // Productor con más afinidad con sus productos
+            List<Tuple<string, string, int>> affinities = products
+                .Select(p => new Tuple<string, string, int>(
+                    p.Producer,
+                    p.ProductName,
+                    Affinity(p.Producer, p.ProductName)
+                ))
+                .OrderByDescending(a => a.Item3)
+                .ToList();
+
+            Tuple<string, string, int> maxAffinityProducer = affinities.Count > 0 ? affinities[0] : null;
+            Console.WriteLine("El productor con más afinidad: " + (maxAffinityProducer != null ? maxAffinityProducer.Item1 : "Ninguno"));
+
+            // Función de afinidad
+            static int Affinity(string name, string product)
+            {
+                return name.GroupBy(letter => letter)
+                           .Union(product.GroupBy(letter => letter))
+                           .Sum(group => group.Count());
+            }
+
+
+            /*
             IEnumerable<(string produc, string Product, double CA)> transformedProducts = Product.Select(p => (
                produc: $"{p.Producer.Substring(0, 3)}...{p.Producer.Last()}",
                Product: i18n[p.ProductName],
@@ -124,7 +207,7 @@ namespace RMarche
             {
                 Console.WriteLine($"{item.produc}\t{item.Product}\t{item.CA}");
             }
-
+            */
 
 
 
