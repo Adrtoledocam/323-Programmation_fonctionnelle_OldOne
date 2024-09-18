@@ -268,11 +268,6 @@ namespace Gpx
         }
 
 
-        public void Dispose()
-        {
-            Writer_.WriteEndElement();
-            Writer_.Close();
-        }
 
         private void WriteSubPoint(GpxPoint point)
         {
